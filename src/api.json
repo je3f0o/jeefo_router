@@ -1,0 +1,105 @@
+{
+  "API": [
+    {
+      "docs": [],
+      "exports": [],
+      "filepath": "index.js"
+    },
+    {
+      "docs": [],
+      "exports": [
+        {
+          "type": "default",
+          "interface": {
+            "type": "ObjectLiteral"
+          }
+        }
+      ],
+      "filepath": "directives/router_link_directive.js"
+    },
+    {
+      "docs": [],
+      "exports": [
+        {
+          "type": "default",
+          "interface": {
+            "type": "Identifier"
+          }
+        }
+      ],
+      "filepath": "services/state_service.js"
+    },
+    {
+      "docs": [],
+      "exports": [
+        {
+          "type": "default",
+          "interface": {
+            "type": "ObjectLiteral"
+          }
+        }
+      ],
+      "filepath": "components/ui_view_component.js"
+    },
+    {
+      "docs": [],
+      "exports": [
+        {
+          "type": "default",
+          "interface": {
+            "type": "ObjectLiteral"
+          }
+        }
+      ],
+      "filepath": "components/ui_view_component_component.js"
+    },
+    {
+      "docs": [],
+      "exports": [
+        {
+          "type": "default",
+          "interface": {
+            "type": "function",
+            "name": "state_constructor",
+            "values": "ctrl,component,state"
+          }
+        }
+      ],
+      "filepath": "constructor.js"
+    },
+    {
+      "docs": [],
+      "exports": [
+        {
+          "type": "default",
+          "interface": {
+            "type": "function",
+            "name": "resolve",
+            "values": "self,component,state"
+          }
+        }
+      ],
+      "filepath": "resolve.js"
+    },
+    {
+      "docs": [],
+      "exports": [
+        {
+          "type": "default",
+          "interface": {
+            "type": "function",
+            "name": "resolve_template",
+            "values": "state"
+          }
+        }
+      ],
+      "filepath": "template_resolver.js"
+    }
+  ],
+  "name": "jeefo_router",
+  "version": {
+    "major": "0",
+    "minor": "0",
+    "micro": "13"
+  }
+}
