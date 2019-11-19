@@ -1,7 +1,7 @@
 {
-    "name": "@jeefo/router",
+    "name": "@jeefo/state",
     "version": "0.0.0",
-    "homepage": "https://github.com/je3f0o/jeefo_router",
+    "homepage": "https://github.com/je3f0o/jeefo_state",
     "copyright": "2019",
     "description": "Part of jeefo framework.",
     "author": {
@@ -16,14 +16,18 @@
     },
     "repository": {
         "type": "git",
-        "url": "git@github.com:je3f0o/jeefo_router.git"
+        "url": "git@github.com:je3f0o/jeefo_state.git"
     },
     "keywords": [
         "jeefo",
         "je3f0o",
         "monkey_patcher"
     ],
-    "dependencies": {},
+    "dependencies": {
+        "@jeefo/component": "0.0.5",
+        "@jeefo/template": "0.0.1",
+        "@jeefo/utils": "0.0.4"
+    },
     "devDependencies": {
         "@jeefo/publish": "0.0.31"
     }
