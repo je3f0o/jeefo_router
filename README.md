@@ -1,1 +1,1 @@
-@jeefo/router part of jeefo framework.
+@jeefo/state part of jeefo framework.
