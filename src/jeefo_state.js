@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : jeefo_state.js
 * Created at  : 2019-11-05
-* Updated at  : 2019-11-19
+* Updated at  : 2019-11-24
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -15,6 +15,7 @@
 
 // ignore:end
 
+const styles         = require("@jeefo/component/styles");
 const Readonly       = require("@jeefo/utils/object/readonly");
 const jeefo_template = require("@jeefo/template");
 const PathFinder     = require("./path_finder");
@@ -27,6 +28,7 @@ const assign_error = property => {
 
 class JeefoState {
     constructor (options) {
+        this.query  = {};
         this.params = {};
 
         let nodes       = null;
@@ -35,17 +37,38 @@ class JeefoState {
         let path_finder = null;
         //let url_matcher = null;
 
-        const template = options.template;
+        const { name, Controller } = options;
 
         const readonly = new Readonly(this);
-        readonly.prop("name" , options.name);
-        readonly.prop("style" , options.style);
-        readonly.prop("template" , template);
-        readonly.prop("Controller" , options.Controller);
+        readonly.prop("name" , name);
+        readonly.prop("Controller", Controller);
+
+        readonly.prop("compare", other => {
+            if (! path_finder) {
+                throw new Error("Wrong state");
+            }
+            const { url }           = this;
+            const { query, params } = other;
+
+            const compare_query = key => url.query[key]  === query[key];
+            const compare_param = key => url.params[key] === params[key];
+
+            return (
+                name === other.name &&
+                path_finder.param_keys.every(compare_param) &&
+                path_finder.query_keys.every(compare_query)
+            );
+        });
 
         readonly.getter("nodes" , () => {
             if (! nodes) {
-                const t = template.replace(STRING_TEMPLATE, "${$1}");
+                if (Controller.style) {
+                    styles.add_style(Controller.style, {
+                        "state" : options.name
+                    });
+                }
+
+                const t = Controller.template.replace(STRING_TEMPLATE, "${$1}");
                 nodes = jeefo_template.parse(t);
             }
 

@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : ui_view.js
 * Created at  : 2019-11-06
-* Updated at  : 2019-11-19
+* Updated at  : 2019-11-24
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -34,15 +34,17 @@ const create_new_child = async (state, component, $placeholder) => {
 
     new_child.$element   = jqlite(`<ui-view name="${state.name}"></ui-view>`);
     component.state_name = state.name;
-    await new_child.init();
 
     component.children.push(new_child);
+    await new_child.init();
 
-    const nodes = state.nodes.map(node => node.clone(true));
-    const elements = await compile(nodes, new_child);
+    if (! new_child.is_destroyed) {
+        const nodes = state.nodes.map(node => node.clone(true));
+        const elements = await compile(nodes, new_child);
 
-    elements.forEach(element => new_child.$element.append(element));
-    $placeholder.after(new_child.$element);
+        elements.forEach(element => new_child.$element.append(element));
+        $placeholder.after(new_child.$element);
+    }
 };
 
 exports.type = "structure";
@@ -73,6 +75,27 @@ exports.controller = class UIView {
             }
         }
 
+        this.on_create_ui = router.on("create_ui", async ({ state }) => {
+            if (parent_ui) {
+                const parent_state_name = state.parent && state.parent.name;
+                if (parent_state_name === parent_ui.state_name) {
+                    await create_new_child(state, component, $comment);
+                    router.trigger("create_ui_success");
+                }
+            } else if (state.parent === null) {
+                await create_new_child(state, component, $comment);
+                router.trigger("create_ui_success");
+            }
+        });
+
+        this.on_destroy_ui = router.on("destroy_ui", event => {
+            if (component.state_name === event.state_name) {
+                component.children[0].destroy();
+                component.state_name = null;
+                router.trigger("destroy_ui_success");
+            }
+        });
+
         if (parent_ui) {
             if (parent_ui.state_name !== router.current_state.name) {
                 let state = router.current_state;
@@ -89,36 +112,9 @@ exports.controller = class UIView {
             }
             await create_new_child(state, component, $comment);
         }
-
-        this.on_change_ui = router.on("change_ui", async (event) => {
-            if (component.state_name === event.state_name) {
-                const old_component = component.children[0];
-                await create_new_child(
-                    event.state, component, old_component.$element
-                );
-                old_component.destroy();
-                router.trigger("change_ui_success");
-            }
-        });
-
-        this.on_create_ui = router.on("create_ui", async ({ state }) => {
-            if (parent_ui && parent_ui.state_name === state.parent.name) {
-                await create_new_child(state, component, $comment);
-                router.trigger("create_ui_success");
-            }
-        });
-
-        this.on_destroy_ui = router.on("destroy_ui", event => {
-            if (component.state_name === event.state_name) {
-                component.children[0].destroy();
-                component.state_name = null;
-                router.trigger("destroy_ui_success");
-            }
-        });
     }
 
     on_destroy () {
-        router.off("change_ui" , this.on_change_ui);
         router.off("create_ui" , this.on_create_ui);
         router.off("destroy_ui", this.on_destroy_ui);
     }

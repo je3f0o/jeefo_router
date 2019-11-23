@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : path_finder.js
 * Created at  : 2019-11-05
-* Updated at  : 2019-11-18
+* Updated at  : 2019-11-24
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -70,26 +70,34 @@ const build_regex_string = url_string => {
 
 class PathFinder {
     constructor (url_pattern) {
-        const { regex, params, handlers } = build_regex_string(url_pattern);
+        const [pathname, query] = url_pattern.split('?');
+        const { regex, params, handlers } = build_regex_string(pathname);
+
+        const query_keys = Object.freeze(query ? query.split('&') : []);
 
         const readonly = new Readonly(this);
 
-        readonly.prop("regex"  , regex);
-        readonly.prop("params" , params);
+        readonly.prop("regex"      , regex);
+        readonly.prop("query_keys" , query_keys);
+        readonly.prop("param_keys" , params);
 
         readonly.prop("test", url_string => {
             return regex.test(url_string);
         });
 
-        readonly.prop("parse", url_string => {
+        readonly.prop("parse", url => {
+            const query  = {};
             const params = {};
-            let matches = url_string.match(this.regex);
+            let matches = url.pathname.match(this.regex);
 
             handlers.forEach((assigner, i) => {
                 assigner(params, matches[i+1]);
             });
 
-            return params;
+            query_keys.forEach(key => query[key] = url.searchParams.get(key));
+
+            url.query  = query;
+            url.params = params;
         });
     }
 }
