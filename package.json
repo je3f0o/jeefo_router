@@ -24,7 +24,7 @@
         "monkey_patcher"
     ],
     "dependencies": {
-        "@jeefo/component": "0.0.6",
+        "@jeefo/component": "0.0.7",
         "@jeefo/template": "0.0.2"
     },
     "devDependencies": {

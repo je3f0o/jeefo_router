@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : ui_view.js
 * Created at  : 2019-11-06
-* Updated at  : 2019-11-24
+* Updated at  : 2019-11-26
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -44,6 +44,9 @@ const create_new_child = async (state, component, $placeholder) => {
 
         elements.forEach(element => new_child.$element.append(element));
         $placeholder.after(new_child.$element);
+        if (component.is_attached) {
+            new_child.trigger_renderable();
+        }
     }
 };
 

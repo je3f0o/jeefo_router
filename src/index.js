@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2019-11-05
-* Updated at  : 2019-11-24
+* Updated at  : 2019-11-29
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -71,7 +71,7 @@ class JeefoStateService extends EventEmitter {
         };
 
         const trigger_event = (new_state) => {
-            const prev_states = state_to_array(current_state);
+            const prev_states    = state_to_array(current_state);
             const current_states = state_to_array(new_state);
             current_state = new_state;
 
@@ -205,7 +205,9 @@ class JeefoStateService extends EventEmitter {
 
                 trigger_event(state);
             } else {
-                console.log(`Not found. '${ url }'`);
+                const event = new Event("change_state_failed");
+                event.url = url;
+                this.emit(event.type, event);
             }
         };
 
