@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2019-11-05
-* Updated at  : 2019-11-29
+* Updated at  : 2019-12-21
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -33,8 +33,14 @@ const state_to_array = state => {
     return result;
 };
 
-const ui_path = `${ __dirname }/components/ui_view`;
-definitions_table.register_component("ui-view", ui_path);
+[
+    "ui_view",
+    "ui_view_element",
+].forEach(filename => {
+    const filepath = `${ __dirname }/components/${ filename }`;
+    const selector = filename.replace(/_/g, '-');
+    definitions_table.register_component(selector, filepath);
+});
 
 const set_local_params = state => {
     const { params } = state;
@@ -73,7 +79,10 @@ class JeefoStateService extends EventEmitter {
         const trigger_event = (new_state) => {
             const prev_states    = state_to_array(current_state);
             const current_states = state_to_array(new_state);
+            const { url } = new_state;
             current_state = new_state;
+            current_state.query  = url.query;
+            current_state.params = url.params;
 
             if (current_states.length < prev_states.length) {
                 for (let [i, current_state] of current_states.entries()) {
@@ -91,6 +100,7 @@ class JeefoStateService extends EventEmitter {
                     const current_state = current_states[i];
                     if (! current_state.compare(prev_state)) {
                         destroy_ui_event(prev_state.name);
+                        current_state.url = url;
                         create_ui_event(current_state);
                         return;
                     }
@@ -99,6 +109,7 @@ class JeefoStateService extends EventEmitter {
                 if (is_initialized) {
                     const state = current_states[prev_states.length];
                     if (state) {
+                        state.url = url;
                         create_ui_event(state);
                     }
                 } else {
@@ -195,12 +206,13 @@ class JeefoStateService extends EventEmitter {
                 } else {
                     history.pushState(null, null, url.href);
                 }
+                state.url = url;
+                state.path_finder.parse(url);
+
                 const event = new Event("change_state");
                 event.state = state;
                 this.emit(event.type, event);
 
-                state.url = url;
-                state.path_finder.parse(url);
                 set_local_params(state);
 
                 trigger_event(state);
@@ -224,13 +236,15 @@ class JeefoStateService extends EventEmitter {
 const router = new JeefoStateService();
 
 window.addEventListener("click", event => {
+    const link = event.path.find(elem => elem.tagName === 'A');
     const is_local_link = (
-        event.target.tagName === 'A' &&
-        event.target.origin  === location.origin
+        link &&
+        link.hasAttribute("href") &&
+        link.origin === location.origin
     );
     if (is_local_link) {
         event.preventDefault();
-        router.go(event.target.href);
+        router.go(link.href);
     }
 });
 

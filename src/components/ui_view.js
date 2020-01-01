@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : ui_view.js
 * Created at  : 2019-11-06
-* Updated at  : 2019-11-26
+* Updated at  : 2019-12-24
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -15,37 +15,36 @@
 
 // ignore:end
 
-const jqlite             = require("@jeefo/jqlite");
-const compile            = require("@jeefo/component/compiler");
-const StructureComponent = require("@jeefo/component/structure_component");
-const router             = require("../index");
+const jqlite  = require("@jeefo/jqlite");
+const compile = require("@jeefo/component/compiler");
+const router  = require("../index");
 
 const prop_comment   = Symbol("$comment");
 const prop_component = Symbol("component");
 
 const create_new_child = async (state, component, $placeholder) => {
-    const new_child = new StructureComponent(null, {
-        binders          : [],
-        dependencies     : [],
-        Controller       : state.Controller,
-        controller_name  : null,
-        is_self_required : false,
-    }, component);
-
-    new_child.$element   = jqlite(`<ui-view name="${state.name}"></ui-view>`);
+    const node = component.node.clone();
+    node.name = "ui-view-element";
     component.state_name = state.name;
 
-    component.children.push(new_child);
-    await new_child.init();
+    await compile([node], component, false);
+
+    const new_child = component.children[0];
+    new_child.controller = new state.Controller();
+
+    const nodes = state.nodes.map(node => node.clone(true));
+    const elements = await compile(nodes, new_child, false);
 
     if (! new_child.is_destroyed) {
-        const nodes = state.nodes.map(node => node.clone(true));
-        const elements = await compile(nodes, new_child);
-
         elements.forEach(element => new_child.$element.append(element));
         $placeholder.after(new_child.$element);
-        if (component.is_attached) {
-            new_child.trigger_renderable();
+
+        if (component.is_initialized) {
+            await new_child.init();
+
+            if (! new_child.is_destroyed && component.is_attached) {
+                new_child.trigger_renderable();
+            }
         }
     }
 };
@@ -54,6 +53,8 @@ exports.type = "structure";
 
 exports.style = `
     ui-view {
+        width   : 100%;
+        height  : 100%;
         display : block;
     }
 `;

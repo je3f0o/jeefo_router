@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : path_finder.js
 * Created at  : 2019-11-05
-* Updated at  : 2019-11-24
+* Updated at  : 2019-12-21
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -81,9 +81,7 @@ class PathFinder {
         readonly.prop("query_keys" , query_keys);
         readonly.prop("param_keys" , params);
 
-        readonly.prop("test", url_string => {
-            return regex.test(url_string);
-        });
+        readonly.prop("test", url_string => regex.test(url_string));
 
         readonly.prop("parse", url => {
             const query  = {};
