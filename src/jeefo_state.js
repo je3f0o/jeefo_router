@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : jeefo_state.js
 * Created at  : 2019-11-05
-* Updated at  : 2019-11-24
+* Updated at  : 2020-01-04
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -35,7 +35,6 @@ class JeefoState {
         let url_pattern = null;
         let parent      = null;
         let path_finder = null;
-        //let url_matcher = null;
 
         const { name, Controller } = options;
 
@@ -58,6 +57,28 @@ class JeefoState {
                 path_finder.param_keys.every(compare_param) &&
                 path_finder.query_keys.every(compare_query)
             );
+        });
+
+        readonly.prop("is_url_changed", url => {
+            if (! path_finder) {
+                throw new Error("Wrong state");
+            }
+
+            if (path_finder.param_keys.length) {
+                const index = path_finder.param_keys.findIndex(key => {
+                    return url.params[key] !== this.params[key];
+                });
+                if (index !== -1) { return true; }
+            }
+
+            if (path_finder.query_keys.length) {
+                const index = path_finder.query_keys.findIndex(key => {
+                    return url.query[key] !== this.query[key];
+                });
+                if (index !== -1) { return true; }
+            }
+
+            return false;
         });
 
         readonly.getter("nodes" , () => {

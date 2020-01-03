@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2019-11-05
-* Updated at  : 2019-12-21
+* Updated at  : 2020-01-04
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -25,14 +25,6 @@ const find_by_name  = name => ({ name:n }) => n === name;
 
 const concat = (...args) => args.join('');
 
-const state_to_array = state => {
-    const result = [];
-    for (; state; state = state.parent) {
-        result.unshift(state);
-    }
-    return result;
-};
-
 [
     "ui_view",
     "ui_view_element",
@@ -42,17 +34,28 @@ const state_to_array = state => {
     definitions_table.register_component(selector, filepath);
 });
 
+const state_to_array = state => {
+    const result = [];
+    for (; state; state = state.parent) {
+        result.unshift(state);
+    }
+    return result;
+};
+
 const set_local_params = state => {
-    const { params } = state;
-    const set_params = state => {
-        return prop => {
-            state.params[prop] = params[prop];
-        };
+    const { params:global_params, query:global_query } = state.url;
+    const set_param = state => {
+        return prop => state.params[prop] = global_params[prop];
+    };
+    const set_query = state => {
+        return prop => state.query[prop] = global_query[prop];
     };
 
-    for (let s = state.parent; s; s = s.parent) {
-        s.params = {};
-        s.path_finder.param_keys.forEach(set_params(s));
+    for (; state; state = state.parent) {
+        state.query  = {};
+        state.params = {};
+        state.path_finder.param_keys.forEach(set_param(state));
+        state.path_finder.query_keys.forEach(set_query(state));
     }
 };
 
@@ -60,7 +63,7 @@ class JeefoStateService extends EventEmitter {
     constructor () {
         super(true);
         let current_state  = null;
-        let is_initialized = false;
+        //let is_initialized = false;
 
         const destroy_ui_event = state_name => {
             const event      = new Event("destroy_ui");
@@ -70,51 +73,43 @@ class JeefoStateService extends EventEmitter {
 
         const create_ui_event = state => {
             const event = new Event("create_ui");
-            state.query  = state.url.query;
-            state.params = state.url.params;
             event.state = state;
             this.emit(event.type, event);
         };
 
-        const trigger_event = (new_state) => {
-            const prev_states    = state_to_array(current_state);
-            const current_states = state_to_array(new_state);
-            const { url } = new_state;
-            current_state = new_state;
-            current_state.query  = url.query;
-            current_state.params = url.params;
+        const find_changed_state = target_state => {
+            const new_states  = state_to_array(target_state);
+            const prev_states = state_to_array(current_state);
 
-            if (current_states.length < prev_states.length) {
-                for (let [i, current_state] of current_states.entries()) {
-                    const prev_state = prev_states[i];
-                    if (! current_state.compare(prev_state)) {
-                        destroy_ui_event(prev_state.name);
-                        create_ui_event(current_state);
-                        return;
-                    }
-                }
-
-                destroy_ui_event(prev_states[current_states.length].name);
-            } else {
-                for (let [i, prev_state] of prev_states.entries()) {
-                    const current_state = current_states[i];
-                    if (! current_state.compare(prev_state)) {
-                        destroy_ui_event(prev_state.name);
-                        current_state.url = url;
-                        create_ui_event(current_state);
-                        return;
-                    }
-                }
-
-                if (is_initialized) {
-                    const state = current_states[prev_states.length];
-                    if (state) {
-                        state.url = url;
-                        create_ui_event(state);
+            for (let [i, new_state] of new_states.entries()) {
+                const prev_state = prev_states[i];
+                if (prev_state) {
+                    const is_changed = (
+                        prev_state !== new_state ||
+                        prev_state.is_url_changed(target_state.url)
+                    );
+                    if (is_changed) {
+                        return { prev_state, new_state };
                     }
                 } else {
-                    is_initialized = true;
+                    return { new_state };
                 }
+            }
+
+            // Child state
+            if (new_states.length < prev_states.length) {
+                return { child_state : prev_states[new_states.length] };
+            }
+        };
+
+        const trigger_event = states => {
+            if (states.child_state) {
+                destroy_ui_event(states.child_state.name);
+            } else {
+                if (states.prev_state) {
+                    destroy_ui_event(states.prev_state.name);
+                }
+                create_ui_event(states.new_state);
             }
         };
 
@@ -123,9 +118,8 @@ class JeefoStateService extends EventEmitter {
         const readonly       = new Readonly(this);
 
         // Readony getters
-        readonly.getter("states"         , () => states);
-        readonly.getter("current_state"  , () => current_state);
-        readonly.getter("is_initialized" , () => is_initialized);
+        readonly.getter("states"        , () => states);
+        readonly.getter("current_state" , () => current_state);
 
         // Readonly methods
         readonly.prop("register", (state_name, Controller) => {
@@ -184,12 +178,6 @@ class JeefoStateService extends EventEmitter {
             }
         });
 
-        readonly.prop("init", () => {
-            if (! is_initialized) {
-                is_initialized = true;
-            }
-        });
-
         // Patchable closure bounded methods...
         this.go = (url, history_state = "push") => {
             if (! url.startsWith(location.origin)) {
@@ -198,24 +186,33 @@ class JeefoStateService extends EventEmitter {
             }
 
             url = new URL(url);
-            const state = states.find(find_by_url(url.pathname));
+            const new_state = states.find(find_by_url(url));
 
-            if (state) {
+            if (new_state) {
                 if (history_state === "pop") {
                     history.replaceState(null, null, url.href);
                 } else {
                     history.pushState(null, null, url.href);
                 }
-                state.url = url;
-                state.path_finder.parse(url);
+                // TODO: PathFinder.parse() method parsing and assigning too.
+                // That is not cool. Please make it better way...
+                new_state.path_finder.parse(url);
+                new_state.url = url;
 
                 const event = new Event("change_state");
-                event.state = state;
+                event.state = new_state;
                 this.emit(event.type, event);
 
-                set_local_params(state);
+                // Step 1. Find changed state
+                const result = find_changed_state(new_state);
+                if (result) {
+                    current_state = new_state;
+                    // Step 2. Set local params of each hierarchy states
+                    set_local_params(new_state);
 
-                trigger_event(state);
+                    // Step 3. Trigger UI events
+                    trigger_event(result);
+                }
             } else {
                 const event = new Event("change_state_failed");
                 event.url = url;

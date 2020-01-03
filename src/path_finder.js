@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : path_finder.js
 * Created at  : 2019-11-05
-* Updated at  : 2019-12-21
+* Updated at  : 2020-01-04
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -81,7 +81,12 @@ class PathFinder {
         readonly.prop("query_keys" , query_keys);
         readonly.prop("param_keys" , params);
 
-        readonly.prop("test", url_string => regex.test(url_string));
+        readonly.prop("test", url => {
+            return (
+                regex.test(url.pathname) &&
+                query_keys.every(prop => url.searchParams.has(prop))
+            );
+        });
 
         readonly.prop("parse", url => {
             const query  = {};
@@ -103,13 +108,16 @@ class PathFinder {
 module.exports = PathFinder;
 
 if (require.main === module) {
-    const pf  = new PathFinder("/:x/:y/:z");
-    const url = "/21/11/a";
+    const { URL } = require("url");
+    const pf  = new PathFinder("/:x/:y/:z?q");
+    const url = new URL("https://google.com/1/2/3?q=0");
 
     console.log(pf);
-    console.log(`URL '${ url }' is matched:`, pf.regex.test(url));
-    if (pf.regex.test(url)) {
-        const params = pf.parse(url);
-        console.log("params:", params);
+    console.log(`URL '${ url.href }' is matched:`, pf.test(url));
+    if (pf.test(url)) {
+        pf.parse(url);
+        console.log(url);
+        console.log("params:", url.params);
+        console.log("query:", url.query);
     }
 }
