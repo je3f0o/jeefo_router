@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : path_finder.js
 * Created at  : 2019-11-05
-* Updated at  : 2020-01-04
+* Updated at  : 2020-05-21
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -41,6 +41,10 @@ const build_regex_string = url_string => {
         });
     }
 
+    if (replacements.length === 0) {
+        url_string = escape_regex(url_string);
+    }
+
     let index      = replacements.length;
     let last_index = url_string.length;
     while (index--) {
@@ -62,7 +66,7 @@ const build_regex_string = url_string => {
     }
 
     // We can add options to config for case sensitive or not
-    const regex = new RegExp(`^${ url_string }$`);
+    const regex    = new RegExp(`^${ url_string }$`);
     const params   = Object.freeze(replacements.map(({ param:p }) => p));
     const handlers = replacements.map(({ handler:h }) => h);
     return { regex, params, handlers };
@@ -107,6 +111,7 @@ class PathFinder {
 
 module.exports = PathFinder;
 
+/*
 if (require.main === module) {
     const { URL } = require("url");
     const pf  = new PathFinder("/:x/:y/:z?q");
@@ -121,3 +126,4 @@ if (require.main === module) {
         console.log("query:", url.query);
     }
 }
+*/
