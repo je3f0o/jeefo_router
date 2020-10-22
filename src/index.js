@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2019-11-05
-* Updated at  : 2020-01-04
+* Updated at  : 2020-06-12
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -15,10 +15,10 @@
 
 // ignore:end
 
-const Readonly          = require("@jeefo/utils/object/readonly");
-const EventEmitter      = require("@jeefo/utils/event_emitter");
-const definitions_table = require("@jeefo/component");
-const JeefoState        = require("./jeefo_state");
+const Readonly            = require("@jeefo/utils/object/readonly");
+const EventEmitter        = require("@jeefo/utils/event_emitter");
+const {definitions_table} = require("@jeefo/component");
+const JeefoState          = require("./jeefo_state");
 
 const find_by_url   = url  => state => state.path_finder.test(url);
 const find_by_name  = name => ({ name:n }) => n === name;
@@ -26,11 +26,10 @@ const find_by_name  = name => ({ name:n }) => n === name;
 const concat = (...args) => args.join('');
 
 [
-    "ui_view",
-    "ui_view_element",
-].forEach(filename => {
+    { selector: "ui-view"          , filename: "ui_view"          } ,
+    { selector: "ui-view--renderer", filename: "ui_view_renderer" }
+].forEach(({selector, filename}) => {
     const filepath = `${ __dirname }/components/${ filename }`;
-    const selector = filename.replace(/_/g, '-');
     definitions_table.register_component(selector, filepath);
 });
 

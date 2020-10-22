@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : jeefo_state.js
 * Created at  : 2019-11-05
-* Updated at  : 2020-01-04
+* Updated at  : 2020-10-23
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -20,8 +20,6 @@ const Readonly       = require("@jeefo/utils/object/readonly");
 const jeefo_template = require("@jeefo/template");
 const PathFinder     = require("./path_finder");
 
-const STRING_TEMPLATE = /{{([^}]+)}}/g;
-
 const assign_error = property => {
     throw new Error(`${ property } property is assignable only once`);
 };
@@ -31,7 +29,7 @@ class JeefoState {
         this.query  = {};
         this.params = {};
 
-        let nodes       = null;
+        let style_added = false;
         let url_pattern = null;
         let parent      = null;
         let path_finder = null;
@@ -81,19 +79,17 @@ class JeefoState {
             return false;
         });
 
-        readonly.getter("nodes" , () => {
-            if (! nodes) {
+        readonly.getter("template" , () => {
+            if (! style_added) {
                 if (Controller.style) {
                     styles.add_style(Controller.style, {
                         "state" : options.name
                     });
                 }
-
-                const t = Controller.template.replace(STRING_TEMPLATE, "${$1}");
-                nodes = jeefo_template.parse(t);
+                style_added = true;
             }
 
-            return nodes;
+            return Controller.template;
         });
 
         // Getter

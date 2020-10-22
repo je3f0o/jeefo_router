@@ -1,1 +1,1 @@
-@jeefo/state part of jeefo framework.
+Front-end state library for jeefo framework. (under developing...)

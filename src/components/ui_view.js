@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : ui_view.js
 * Created at  : 2019-11-06
-* Updated at  : 2019-12-24
+* Updated at  : 2020-06-12
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -15,36 +15,37 @@
 
 // ignore:end
 
-const jqlite  = require("@jeefo/jqlite");
-const compile = require("@jeefo/component/compiler");
-const router  = require("../index");
+const jqlite    = require("@jeefo/jqlite");
+const router    = require("../index");
+const {compile} = require("@jeefo/component");
 
 const prop_comment   = Symbol("$comment");
 const prop_component = Symbol("component");
 
 const create_new_child = async (state, component, $placeholder) => {
-    const node = component.node.clone();
-    node.name = "ui-view-element";
-    component.state_name = state.name;
-
-    await compile([node], component, false);
-
+    // clone attributes
+    let attrs = [];
+    for (const attr of component.element.attributes) {
+        attrs.push(`${attr.name}="${attr.value}"`);
+    }
+    attrs = attrs.length ? ' ' + attrs.join(' ') : '';
+    const tag      = "ui-view--renderer";
+    const template = `<${tag}${attrs}>${state.template}</${tag}>`;
+    await compile(template, component, false);
     const new_child = component.children[0];
-    new_child.controller = new state.Controller();
-
-    const nodes = state.nodes.map(node => node.clone(true));
-    const elements = await compile(nodes, new_child, false);
 
     if (! new_child.is_destroyed) {
-        elements.forEach(element => new_child.$element.append(element));
-        $placeholder.after(new_child.$element);
+        new_child.Controller = state.Controller;
+        component.state_name = state.name;
+        if (state.controller_name) {
+            new_child.controller_name = state.controller_name;
+        }
 
-        if (component.is_initialized) {
-            await new_child.init();
+        await new_child.initialize();
 
-            if (! new_child.is_destroyed && component.is_attached) {
-                new_child.trigger_renderable();
-            }
+        if (! new_child.is_destroyed) {
+            $placeholder.after(new_child.$element);
+            if (component.is_rendered) { new_child.trigger_render(); }
         }
     }
 };
@@ -52,6 +53,7 @@ const create_new_child = async (state, component, $placeholder) => {
 exports.type = "structure";
 
 exports.style = `
+    /* css */
     ui-view {
         width   : 100%;
         height  : 100%;
@@ -60,13 +62,10 @@ exports.style = `
 `;
 
 exports.controller = class UIView {
-    constructor () { }
-
     async on_init ($element, component) {
         const $comment = jqlite(document.createComment(" UIView "));
         $element.before($comment);
         $element.remove();
-        component.$element = null;
 
         this[prop_comment]   = $comment;
         this[prop_component] = component;
