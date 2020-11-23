@@ -102,6 +102,7 @@ exports.controller = class UIView {
             if (component.state_name === state_name) destroy_ui();
         });
         this.on_replace_ui = router.on("replace_ui", async ({states}) => {
+            if (component.is_destroyed) return;
             if (states.prev_state.name === component.state_name) {
                 destroy_ui();
                 create_ui({state: states.new_state});
