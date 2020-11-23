@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : ui_view.js
 * Created at  : 2019-11-06
-* Updated at  : 2020-11-23
+* Updated at  : 2020-11-24
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -45,7 +45,11 @@ const create_new_child = async (state, component, $placeholder) => {
 
         if (! new_child.is_destroyed) {
             $placeholder.after(new_child.$element);
-            if (component.is_rendered) new_child.trigger_render();
+            // `new_child` can be already rendered because of parent_ui's
+            // `trigger_render()`
+            if (component.is_rendered && ! new_child.is_rendered) {
+                new_child.trigger_render();
+            }
         }
     }
 };
