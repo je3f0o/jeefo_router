@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2019-11-05
-* Updated at  : 2020-06-12
+* Updated at  : 2020-11-23
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -76,6 +76,12 @@ class JeefoStateService extends EventEmitter {
             this.emit(event.type, event);
         };
 
+        const replace_ui_event = states => {
+            const event  = new Event("replace_ui");
+            event.states = states;
+            this.emit(event.type, event);
+        };
+
         const find_changed_state = target_state => {
             const new_states  = state_to_array(target_state);
             const prev_states = state_to_array(current_state);
@@ -106,9 +112,10 @@ class JeefoStateService extends EventEmitter {
                 destroy_ui_event(states.child_state.name);
             } else {
                 if (states.prev_state) {
-                    destroy_ui_event(states.prev_state.name);
+                    replace_ui_event(states);
+                } else {
+                    create_ui_event(states.new_state);
                 }
-                create_ui_event(states.new_state);
             }
         };
 

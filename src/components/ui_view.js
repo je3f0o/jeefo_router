@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : ui_view.js
 * Created at  : 2019-11-06
-* Updated at  : 2020-06-12
+* Updated at  : 2020-11-23
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -45,7 +45,7 @@ const create_new_child = async (state, component, $placeholder) => {
 
         if (! new_child.is_destroyed) {
             $placeholder.after(new_child.$element);
-            if (component.is_rendered) { new_child.trigger_render(); }
+            if (component.is_rendered) new_child.trigger_render();
         }
     }
 };
@@ -53,12 +53,11 @@ const create_new_child = async (state, component, $placeholder) => {
 exports.type = "structure";
 
 exports.style = `
-    /* css */
-    ui-view {
-        width   : 100%;
-        height  : 100%;
-        display : block;
-    }
+/* sass */
+ui-view
+    width   : 100%
+    height  : 100%
+    display : block
 `;
 
 exports.controller = class UIView {
@@ -78,7 +77,7 @@ exports.controller = class UIView {
             }
         }
 
-        this.on_create_ui = router.on("create_ui", async ({ state }) => {
+        const create_ui = async ({state}) => {
             if (parent_ui) {
                 const parent_state_name = state.parent && state.parent.name;
                 if (parent_state_name === parent_ui.state_name) {
@@ -86,16 +85,26 @@ exports.controller = class UIView {
                     router.trigger("create_ui_success");
                 }
             } else if (state.parent === null) {
+                event.is_locked = true;
                 await create_new_child(state, component, $comment);
                 router.trigger("create_ui_success");
             }
-        });
+        };
 
-        this.on_destroy_ui = router.on("destroy_ui", event => {
-            if (component.state_name === event.state_name) {
-                component.children[0].destroy();
-                component.state_name = null;
-                router.trigger("destroy_ui_success");
+        const destroy_ui = () => {
+            component.children[0].destroy();
+            component.state_name = null;
+            router.trigger("destroy_ui_success");
+        };
+
+        this.on_create_ui  = router.on("create_ui" , create_ui);
+        this.on_destroy_ui = router.on("destroy_ui", ({state_name}) => {
+            if (component.state_name === state_name) destroy_ui();
+        });
+        this.on_replace_ui = router.on("replace_ui", async ({states}) => {
+            if (states.prev_state.name === component.state_name) {
+                destroy_ui();
+                create_ui({state: states.new_state});
             }
         });
 
@@ -120,5 +129,6 @@ exports.controller = class UIView {
     on_destroy () {
         router.off("create_ui" , this.on_create_ui);
         router.off("destroy_ui", this.on_destroy_ui);
+        router.off("replace_ui", this.on_replace_ui);
     }
 };
