@@ -62,7 +62,7 @@ ui-view
 
 exports.controller = class UIView {
     async on_init ($element, component) {
-        const $comment = jqlite(document.createComment(" UIView "));
+        const $comment = jqlite(new Comment(" UIView "));
         $element.before($comment);
         $element.remove();
 
