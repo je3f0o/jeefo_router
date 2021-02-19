@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2019-11-05
-* Updated at  : 2020-11-23
+* Updated at  : 2021-01-20
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -239,7 +239,9 @@ class JeefoStateService extends EventEmitter {
 const router = new JeefoStateService();
 
 window.addEventListener("click", event => {
-    const link = event.path.find(elem => elem.tagName === 'A');
+    const path = event.path || (event.composedPath && event.composedPath());
+    const link = path.find(elem => elem.tagName === 'A');
+
     const is_local_link = (
         link &&
         link.hasAttribute("href") &&
