@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2019-11-05
-* Updated at  : 2021-01-20
+* Updated at  : 2021-03-07
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -195,6 +195,10 @@ class JeefoStateService extends EventEmitter {
             const new_state = states.find(find_by_url(url));
 
             if (new_state) {
+                if (current_state && current_state.name === new_state.name) {
+                    return; // cancel
+                }
+
                 if (history_state === "pop") {
                     history.replaceState(null, null, url.href);
                 } else {
